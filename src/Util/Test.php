@@ -50,6 +50,9 @@ if (!function_exists('trait_exists')) {
     }
 }
 
+use Eloquent\Cosmos\Resolution\FixedContextSymbolResolver;
+use Eloquent\Cosmos\Symbol\Symbol;
+
 /**
  * Test helpers.
  *
@@ -308,7 +311,13 @@ class PHPUnit_Util_Test
               $className, $methodName
             );
 
-            $class   = $matches[1];
+            $symbolResolver = FixedContextSymbolResolver::fromClass($reflector->getDeclaringClass());
+
+            $class = $symbolResolver ->resolve(Symbol::fromString($matches[1]))
+                ->normalize()
+                ->toRelative()
+                ->string();
+
             $code    = null;
             $message = '';
 
@@ -316,6 +325,7 @@ class PHPUnit_Util_Test
                 $message = trim($matches[2]);
             } elseif (isset($annotations['method']['expectedExceptionMessage'])) {
                 $message = self::parseAnnotationContent(
+                    $symbolResolver,
                     $annotations['method']['expectedExceptionMessage'][0]
                 );
             }
@@ -324,6 +334,7 @@ class PHPUnit_Util_Test
                 $code = $matches[3];
             } elseif (isset($annotations['method']['expectedExceptionCode'])) {
                 $code = self::parseAnnotationContent(
+                    $symbolResolver,
                     $annotations['method']['expectedExceptionCode'][0]
                 );
             }
@@ -349,14 +360,25 @@ class PHPUnit_Util_Test
      *
      * If the constant is not found the string is used as is to ensure maximum BC.
      *
-     * @param  string $message
+     * @param  FixedContextSymbolResolver $symbolResolver
+     * @param  string                     $message
      * @return string
      */
-    private static function parseAnnotationContent($message)
+    private static function parseAnnotationContent(FixedContextSymbolResolver $symbolResolver, $message)
     {
-        if (strpos($message, '::') !== false && count(explode('::', $message) == 2)) {
-            if (defined($message)) {
-                $message = constant($message);
+        if (strpos($message, '::')) {
+            $parts = explode('::', $message);
+
+            if (2 == count($parts)) {
+                $parts[0] = $symbolResolver->resolve(Symbol::fromString($parts[0]))
+                    ->normalize()
+                    ->toRelative()
+                    ->string();
+
+                $message = implode('::', $parts);
+                if (defined($message)) {
+                    $message = constant($message);
+                }
             }
         }
 
