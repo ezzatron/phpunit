@@ -323,7 +323,7 @@ class Util_TestTest extends PHPUnit_Framework_TestCase
      */
     public function testGetLinesToBeCovered($test, $lines)
     {
-        if (strpos($test, 'Namespace') === 0) {
+        if (strpos($test, 'Namespace') !== false) {
             $expected = array(
               TEST_FILES_PATH . 'NamespaceCoveredClass.php' => $lines
             );
@@ -580,7 +580,23 @@ class Util_TestTest extends PHPUnit_Framework_TestCase
           array(
             'CoverageNothingTest',
             false
-          )
+          ),
+          array(
+            'Foo\NamespaceCoverageSameNamespaceTest',
+            range(21, 38)
+          ),
+          array(
+            'Bar\NamespaceCoverageDifferentNamespaceTest',
+            range(21, 38)
+          ),
+          array(
+            'Bar\NamespaceCoverageUseStatementTest',
+            range(21, 38)
+          ),
+          array(
+            'Bar\NamespaceCoverageCoversDefaultClassResolutionTest',
+            range(33, 37)
+          ),
         );
     }
 }

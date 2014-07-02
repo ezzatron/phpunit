@@ -156,6 +156,7 @@ class PHPUnit_Util_Test
         $annotations = self::parseTestMethodAnnotations(
             $className, $methodName
         );
+        $resolver = FixedContextSymbolResolver::fromSymbol($className);
 
         $classShortcut = null;
 
@@ -170,7 +171,9 @@ class PHPUnit_Util_Test
                 );
             }
 
-            $classShortcut = $annotations['class'][$mode . 'DefaultClass'][0];
+            $classShortcut = $resolver->resolve(Symbol::fromString($annotations['class'][$mode . 'DefaultClass'][0]))
+                ->normalize()
+                ->string();
         }
 
         $list = array();
@@ -194,7 +197,7 @@ class PHPUnit_Util_Test
 
             $codeList = array_merge(
                 $codeList,
-                self::resolveElementToReflectionObjects($element)
+                self::resolveElementToReflectionObjects($resolver, $element)
             );
         }
 
@@ -808,17 +811,24 @@ class PHPUnit_Util_Test
     }
 
     /**
-     * @param  string $element
+     * @param  FixedContextSymbolResolver $resolver
+     * @param  string                     $element
      * @return array
      * @throws PHPUnit_Framework_InvalidCoversTargetException
      * @since  Method available since Release 4.0.0
      */
-    private static function resolveElementToReflectionObjects($element)
+    private static function resolveElementToReflectionObjects(FixedContextSymbolResolver $resolver, $element)
     {
         $codeToCoverList = array();
 
         if (strpos($element, '::') !== false) {
             list($className, $methodName) = explode('::', $element);
+
+            if ('' !== trim($className)) {
+                $className = $resolver->resolve(Symbol::fromString($className))
+                    ->normalize()
+                    ->string();
+            }
 
             if (isset($methodName[0]) && $methodName[0] == '<') {
                 $classes = array($className);
@@ -893,6 +903,10 @@ class PHPUnit_Util_Test
 
                 $extended = true;
             }
+
+            $element = $resolver->resolve(Symbol::fromString($element))
+                ->normalize()
+                ->string();
 
             $classes = array($element);
 
