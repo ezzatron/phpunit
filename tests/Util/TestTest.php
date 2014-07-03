@@ -130,8 +130,17 @@ class Util_TestTest extends PHPUnit_Framework_TestCase
         );
 
         $this->assertSame(
-            array('class' => 'My\Space\Class', 'code' => 'My\Space\ExceptionNamespaceTest::UNKNOWN_CODE_CONSTANT', 'message' => 'My\Space\ExceptionNamespaceTest::UNKNOWN_MESSAGE_CONSTANT'),
+            array('class' => 'My\Space\Class', 'code' => 'ExceptionNamespaceTest::UNKNOWN_CODE_CONSTANT', 'message' => 'ExceptionNamespaceTest::UNKNOWN_MESSAGE_CONSTANT'),
             PHPUnit_Util_Test::getExpectedException('My\Space\ExceptionNamespaceTest', 'testUnknownConstants')
+        );
+
+        $this->assertSame(
+            array(
+              'class' => 'My\Space\Class',
+              'code' => 'Code contains constant ExceptionNamespaceTest::UNKNOWN_CODE_CONSTANT (unlikely)',
+              'message' => 'Message contains constant ExceptionNamespaceTest::UNKNOWN_MESSAGE_CONSTANT'
+            ),
+            PHPUnit_Util_Test::getExpectedException('My\Space\ExceptionNamespaceTest', 'testConstantInsideValue')
         );
 
         $this->assertSame(

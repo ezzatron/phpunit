@@ -37,6 +37,15 @@ class ExceptionNamespaceTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @expectedException Class
+     * @expectedExceptionCode Code contains constant ExceptionNamespaceTest::UNKNOWN_CODE_CONSTANT (unlikely)
+     * @expectedExceptionMessage Message contains constant ExceptionNamespaceTest::UNKNOWN_MESSAGE_CONSTANT
+     */
+    public function testConstantInsideValue()
+    {
+    }
+
+    /**
      * @expectedException \Class
      * @expectedExceptionMessage \My\Space\ExceptionNamespaceTest::ERROR_MESSAGE
      * @expectedExceptionCode \My\Space\ExceptionNamespaceTest::ERROR_CODE

@@ -52,6 +52,7 @@ if (!function_exists('trait_exists')) {
 
 use Eloquent\Cosmos\Resolution\FixedContextSymbolResolver;
 use Eloquent\Cosmos\Symbol\Symbol;
+use Eloquent\Pathogen\Exception\InvalidPathAtomExceptionInterface;
 
 /**
  * Test helpers.
@@ -373,14 +374,18 @@ class PHPUnit_Util_Test
             $parts = explode('::', $message);
 
             if (2 == count($parts)) {
-                $parts[0] = $symbolResolver->resolve(Symbol::fromString($parts[0]))
-                    ->normalize()
-                    ->toRelative()
-                    ->string();
+                try {
+                    $parts[0] = $symbolResolver->resolve(Symbol::fromString($parts[0]))
+                        ->normalize()
+                        ->toRelative()
+                        ->string();
+                } catch (InvalidPathAtomExceptionInterface $e) {
+                    // ignore invalid symbols
+                }
 
-                $message = implode('::', $parts);
-                if (defined($message)) {
-                    $message = constant($message);
+                $constant = implode('::', $parts);
+                if (defined($constant)) {
+                    $message = constant($constant);
                 }
             }
         }
