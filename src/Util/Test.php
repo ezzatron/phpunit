@@ -51,7 +51,7 @@ if (!function_exists('trait_exists')) {
 }
 
 use Eloquent\Cosmos\Resolution\FixedContextSymbolResolver;
-use Eloquent\Cosmos\Symbol\Symbol;
+use Eloquent\Cosmos\Symbol\Factory\SymbolFactory;
 use Eloquent\Pathogen\Exception\InvalidPathAtomExceptionInterface;
 
 /**
@@ -157,7 +157,8 @@ class PHPUnit_Util_Test
         $annotations = self::parseTestMethodAnnotations(
             $className, $methodName
         );
-        $resolver = FixedContextSymbolResolver::fromSymbol($className);
+        $symbolFactory = SymbolFactory::instance();
+        $symbolResolver = FixedContextSymbolResolver::fromSymbol($className);
 
         $classShortcut = null;
 
@@ -172,9 +173,7 @@ class PHPUnit_Util_Test
                 );
             }
 
-            $classShortcut = $resolver->resolve(Symbol::fromString($annotations['class'][$mode . 'DefaultClass'][0]))
-                ->normalize()
-                ->string();
+            $classShortcut = $symbolResolver->resolve($symbolFactory->create($annotations['class'][$mode . 'DefaultClass'][0]))->string();
         }
 
         $list = array();
@@ -198,7 +197,7 @@ class PHPUnit_Util_Test
 
             $codeList = array_merge(
                 $codeList,
-                self::resolveElementToReflectionObjects($resolver, $element)
+                self::resolveElementToReflectionObjects($symbolFactory, $symbolResolver, $element)
             );
         }
 
@@ -315,12 +314,9 @@ class PHPUnit_Util_Test
               $className, $methodName
             );
 
+            $symbolFactory = SymbolFactory::instance();
             $symbolResolver = FixedContextSymbolResolver::fromClass($reflector->getDeclaringClass());
-
-            $class = $symbolResolver ->resolve(Symbol::fromString($matches[1]))
-                ->normalize()
-                ->toRelative()
-                ->string();
+            $class = ltrim($symbolResolver->resolve($symbolFactory->create($matches[1]))->string(), '\\');
 
             $code    = null;
             $message = '';
@@ -329,6 +325,7 @@ class PHPUnit_Util_Test
                 $message = trim($matches[2]);
             } elseif (isset($annotations['method']['expectedExceptionMessage'])) {
                 $message = self::parseAnnotationContent(
+                    $symbolFactory,
                     $symbolResolver,
                     $annotations['method']['expectedExceptionMessage'][0]
                 );
@@ -338,6 +335,7 @@ class PHPUnit_Util_Test
                 $code = $matches[3];
             } elseif (isset($annotations['method']['expectedExceptionCode'])) {
                 $code = self::parseAnnotationContent(
+                    $symbolFactory,
                     $symbolResolver,
                     $annotations['method']['expectedExceptionCode'][0]
                 );
@@ -364,21 +362,22 @@ class PHPUnit_Util_Test
      *
      * If the constant is not found the string is used as is to ensure maximum BC.
      *
+     * @param  SymbolFactory              $symbolFactory
      * @param  FixedContextSymbolResolver $symbolResolver
      * @param  string                     $message
      * @return string
      */
-    private static function parseAnnotationContent(FixedContextSymbolResolver $symbolResolver, $message)
-    {
+    private static function parseAnnotationContent(
+        SymbolFactory $symbolFactory,
+        FixedContextSymbolResolver $symbolResolver,
+        $message
+    ) {
         if (strpos($message, '::')) {
             $parts = explode('::', $message);
 
             if (2 == count($parts)) {
                 try {
-                    $parts[0] = $symbolResolver->resolve(Symbol::fromString($parts[0]))
-                        ->normalize()
-                        ->toRelative()
-                        ->string();
+                    $parts[0] = $symbolResolver->resolve($symbolFactory->create($parts[0]))->string();
                 } catch (InvalidPathAtomExceptionInterface $e) {
                     // ignore invalid symbols
                 }
@@ -816,23 +815,25 @@ class PHPUnit_Util_Test
     }
 
     /**
-     * @param  FixedContextSymbolResolver $resolver
+     * @param  SymbolFactory              $symbolFactory
+     * @param  FixedContextSymbolResolver $symbolResolver
      * @param  string                     $element
      * @return array
      * @throws PHPUnit_Framework_InvalidCoversTargetException
      * @since  Method available since Release 4.0.0
      */
-    private static function resolveElementToReflectionObjects(FixedContextSymbolResolver $resolver, $element)
-    {
+    private static function resolveElementToReflectionObjects(
+        SymbolFactory $symbolFactory,
+        FixedContextSymbolResolver $symbolResolver,
+        $element
+    ) {
         $codeToCoverList = array();
 
         if (strpos($element, '::') !== false) {
             list($className, $methodName) = explode('::', $element);
 
             if ('' !== trim($className)) {
-                $className = $resolver->resolve(Symbol::fromString($className))
-                    ->normalize()
-                    ->string();
+                $className = $symbolResolver->resolve($symbolFactory->create($className))->string();
             }
 
             if (isset($methodName[0]) && $methodName[0] == '<') {
@@ -909,9 +910,7 @@ class PHPUnit_Util_Test
                 $extended = true;
             }
 
-            $element = $resolver->resolve(Symbol::fromString($element))
-                ->normalize()
-                ->string();
+            $element = $symbolResolver->resolve($symbolFactory->create($element))->string();
 
             $classes = array($element);
 
