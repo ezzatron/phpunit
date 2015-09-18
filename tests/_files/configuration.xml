@@ -12,6 +12,7 @@
          convertWarningsToExceptions="true"
          forceCoversAnnotation="false"
          mapTestClassNameToCoveredClassName="false"
+         resolveAnnotations="false"
          printerClass="PHPUnit_TextUI_ResultPrinter"
          stopOnFailure="false"
          stopOnWarning="false"

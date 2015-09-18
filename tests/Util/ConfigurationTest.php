@@ -320,6 +320,7 @@ class Util_ConfigurationTest extends PHPUnit_Framework_TestCase
             'convertWarningsToExceptions'                => true,
             'forceCoversAnnotation'                      => false,
             'mapTestClassNameToCoveredClassName'         => false,
+            'resolveAnnotations'                         => false,
             'printerClass'                               => 'PHPUnit_TextUI_ResultPrinter',
             'stopOnFailure'                              => false,
             'stopOnWarning'                              => false,
