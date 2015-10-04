@@ -62,6 +62,14 @@ class PHPUnit_Framework_TestSuite implements PHPUnit_Framework_Test, PHPUnit_Fra
     protected $backupStaticAttributes = null;
 
     /**
+     * Enable or disable the resolution of class names in annotations against
+     * any defined namespace and/or use statements.
+     *
+     * @var bool
+     */
+    protected $resolveAnnotations = null;
+
+    /**
      * @var bool
      */
     private $beStrictAboutChangesToGlobalState = null;
@@ -730,6 +738,7 @@ class PHPUnit_Framework_TestSuite implements PHPUnit_Framework_Test, PHPUnit_Fra
                 $test->setBackupGlobals($this->backupGlobals);
                 $test->setBackupStaticAttributes($this->backupStaticAttributes);
                 $test->setRunTestInSeparateProcess($this->runTestInSeparateProcess);
+                $test->setResolveAnnotations($this->resolveAnnotations);
             }
 
             $test->run($result);
@@ -955,6 +964,17 @@ class PHPUnit_Framework_TestSuite implements PHPUnit_Framework_Test, PHPUnit_Fra
         if (is_null($this->backupStaticAttributes) &&
             is_bool($backupStaticAttributes)) {
             $this->backupStaticAttributes = $backupStaticAttributes;
+        }
+    }
+
+    /**
+     * @param bool $resolveAnnotations
+     * @since  Method available since Release ?.?.?
+     */
+    public function setResolveAnnotations($resolveAnnotations)
+    {
+        if (is_bool($resolveAnnotations)) {
+            $this->resolveAnnotations = $resolveAnnotations;
         }
     }
 

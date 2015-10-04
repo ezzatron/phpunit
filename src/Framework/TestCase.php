@@ -109,6 +109,14 @@ abstract class PHPUnit_Framework_TestCase extends PHPUnit_Framework_Assert imple
     protected $preserveGlobalState = true;
 
     /**
+     * Whether or not this test should resolve class names in annotations
+     * against any defined namespace and/or use statements.
+     *
+     * @var bool
+     */
+    protected $resolveAnnotations = false;
+
+    /**
      * Whether or not this test is running in a separate PHP process.
      *
      * @var bool
@@ -1084,6 +1092,17 @@ abstract class PHPUnit_Framework_TestCase extends PHPUnit_Framework_Assert imple
         if (is_null($this->backupStaticAttributes) &&
             is_bool($backupStaticAttributes)) {
             $this->backupStaticAttributes = $backupStaticAttributes;
+        }
+    }
+
+    /**
+     * @param bool $resolveAnnotations
+     * @since  Method available since Release ?.?.?
+     */
+    public function setResolveAnnotations($resolveAnnotations)
+    {
+        if (is_bool($resolveAnnotations)) {
+            $this->resolveAnnotations = $resolveAnnotations;
         }
     }
 

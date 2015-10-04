@@ -162,6 +162,10 @@ class PHPUnit_TextUI_TestRunner extends PHPUnit_Runner_BaseTestRunner
             $suite->setBackupStaticAttributes(true);
         }
 
+        if ($arguments['resolveAnnotations'] === true) {
+            $suite->setResolveAnnotations(true);
+        }
+
         if ($arguments['beStrictAboutChangesToGlobalState'] === true) {
             $suite->setbeStrictAboutChangesToGlobalState(true);
         }
@@ -611,6 +615,11 @@ class PHPUnit_TextUI_TestRunner extends PHPUnit_Runner_BaseTestRunner
                 $arguments['backupStaticAttributes'] = $phpunitConfiguration['backupStaticAttributes'];
             }
 
+            if (isset($phpunitConfiguration['resolveAnnotations']) &&
+                !isset($arguments['resolveAnnotations'])) {
+                $arguments['resolveAnnotations'] = $phpunitConfiguration['resolveAnnotations'];
+            }
+
             if (isset($phpunitConfiguration['beStrictAboutChangesToGlobalState']) &&
                 !isset($arguments['beStrictAboutChangesToGlobalState'])) {
                 $arguments['beStrictAboutChangesToGlobalState'] = $phpunitConfiguration['beStrictAboutChangesToGlobalState'];
@@ -928,6 +937,7 @@ class PHPUnit_TextUI_TestRunner extends PHPUnit_Runner_BaseTestRunner
         $arguments['processUncoveredFilesFromWhitelist']         = isset($arguments['processUncoveredFilesFromWhitelist'])         ? $arguments['processUncoveredFilesFromWhitelist']         : false;
         $arguments['backupGlobals']                              = isset($arguments['backupGlobals'])                              ? $arguments['backupGlobals']                              : null;
         $arguments['backupStaticAttributes']                     = isset($arguments['backupStaticAttributes'])                     ? $arguments['backupStaticAttributes']                     : null;
+        $arguments['resolveAnnotations']                         = isset($arguments['resolveAnnotations'])                         ? $arguments['resolveAnnotations']                         : null;
         $arguments['beStrictAboutChangesToGlobalState']          = isset($arguments['beStrictAboutChangesToGlobalState'])          ? $arguments['beStrictAboutChangesToGlobalState']          : null;
         $arguments['cacheTokens']                                = isset($arguments['cacheTokens'])                                ? $arguments['cacheTokens']                                : false;
         $arguments['columns']                                    = isset($arguments['columns'])                                    ? $arguments['columns']                                    : 80;
