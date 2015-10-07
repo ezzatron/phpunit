@@ -8,6 +8,12 @@
  * file that was distributed with this source code.
  */
 
+use Eloquent\Cosmos\Persistence\ResolutionContextReader;
+use Eloquent\Cosmos\Resolution\Context\ResolutionContextInterface;
+use Eloquent\Cosmos\Resolution\SymbolResolver;
+use Eloquent\Cosmos\Resolution\SymbolResolverInterface;
+use Eloquent\Cosmos\Symbol\Symbol;
+
 /**
  * Test helpers.
  *
@@ -310,17 +316,113 @@ class PHPUnit_Util_Test
     }
 
     /**
+     * Returns the expected exception for a test case.
+     *
+     * @param  PHPUnit_Framework_TestCase $testCase
+     * @param  string $methodName
+     * @return array
+     * @since  Method available since Release 3.3.6
+     */
+    public static function getExpectedExceptionForTestCase(PHPUnit_Framework_TestCase $testCase, $methodName)
+    {
+        $className  = get_class($testCase);
+        $reflector  = new ReflectionMethod($className, $methodName);
+        $docComment = $reflector->getDocComment();
+        $docComment = substr($docComment, 3, -2);
+
+        if (preg_match(self::REGEX_EXPECTED_EXCEPTION, $docComment, $matches)) {
+            $annotations = self::parseTestMethodAnnotations(
+                $className,
+                $methodName
+            );
+
+            $class         = $matches[1];
+            $code          = null;
+            $message       = '';
+            $messageRegExp = '';
+
+            if ($testCase->resolveAnnotations()) {
+                $resolutionContext = ResolutionContextReader::instance()
+                    ->readFromClass($reflector->getDeclaringClass());
+                $symbolResolver = SymbolResolver::instance();
+
+                $class = $symbolResolver
+                    ->resolve($resolutionContext, Symbol::fromString($class))
+                    ->runtimeString();
+            } else {
+                $resolutionContext = null;
+                $symbolResolver = null;
+            }
+
+            if (isset($matches[2])) {
+                $message = trim($matches[2]);
+            } elseif (isset($annotations['method']['expectedExceptionMessage'])) {
+                $message = self::parseAnnotationContent(
+                    $annotations['method']['expectedExceptionMessage'][0]
+                );
+            }
+
+            if (isset($annotations['method']['expectedExceptionMessageRegExp'])) {
+                $messageRegExp = self::parseAnnotationContent(
+                    $annotations['method']['expectedExceptionMessageRegExp'][0]
+                );
+            }
+
+            if (isset($matches[3])) {
+                $code = $matches[3];
+            } elseif (isset($annotations['method']['expectedExceptionCode'])) {
+                $code = self::parseAnnotationContent(
+                    $annotations['method']['expectedExceptionCode'][0]
+                );
+            }
+
+            if (is_numeric($code)) {
+                $code = (int) $code;
+            } elseif (is_string($code) && defined($code)) {
+                $code = (int) constant($code);
+            }
+
+            return [
+              'class' => $class, 'code' => $code, 'message' => $message, 'message_regex' => $messageRegExp
+            ];
+        }
+
+        return false;
+    }
+
+    /**
      * Parse annotation content to use constant/class constant values
      *
      * Constants are specified using a starting '@'. For example: @ClassName::CONST_NAME
      *
      * If the constant is not found the string is used as is to ensure maximum BC.
      *
-     * @param  string $message
+     * @param  string                          $message
+     * @param  SymbolResolverInterface|null    $symbolResolver
+     * @param  ResolutionContextInterface|null $resolutionContext
      * @return string
      */
-    private static function parseAnnotationContent($message)
-    {
+    private static function parseAnnotationContent(
+        $message,
+        SymbolResolverInterface $symbolResolver = null,
+        ResolutionContextInterface $resolutionContext = null
+    ) {
+        if (false === strpos($message, '::')) {
+            return $message;
+        }
+
+        $parts = explode('::', $message);
+
+        if (2 !== count($parts)) {
+            return $message;
+        }
+
+        if ($symbolResolver) {
+            $parts[0] = $symbolResolver
+                ->resolve($resolutionContext, Symbol::fromString($parts[0]))
+                ->runtimeString();
+        }
+
         if (strpos($message, '::') !== false && count(explode('::', $message) == 2)) {
             if (defined($message)) {
                 $message = constant($message);

@@ -119,6 +119,105 @@ class Util_TestTest extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * @covers PHPUnit_Util_Test::getExpectedExceptionForTestCase
+     * @todo   Split up in separate tests
+     */
+    public function testGetExpectedExceptionForTestCase()
+    {
+        $exceptionTest = new \ExceptionTest();
+        $nsExceptionTest = new \My\Space\ExceptionNamespaceTest();
+
+        $this->assertArraySubset(
+          ['class' => 'FooBarBaz', 'code' => null, 'message' => ''],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testOne')
+        );
+
+        $this->assertArraySubset(
+          ['class' => 'Foo_Bar_Baz', 'code' => null, 'message' => ''],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testTwo')
+        );
+
+        $this->assertArraySubset(
+          ['class' => 'Foo\Bar\Baz', 'code' => null, 'message' => ''],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testThree')
+        );
+
+        $this->assertArraySubset(
+          ['class' => 'ほげ', 'code' => null, 'message' => ''],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testFour')
+        );
+
+        $this->assertArraySubset(
+          ['class' => 'Class', 'code' => 1234, 'message' => 'Message'],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testFive')
+        );
+
+        $this->assertArraySubset(
+          ['class' => 'Class', 'code' => 1234, 'message' => 'Message'],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testSix')
+        );
+
+        $this->assertArraySubset(
+          ['class' => 'Class', 'code' => 'ExceptionCode', 'message' => 'Message'],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testSeven')
+        );
+
+        $this->assertArraySubset(
+          ['class' => 'Class', 'code' => 0, 'message' => 'Message'],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testEight')
+        );
+
+        $this->assertArraySubset(
+          ['class' => 'Class', 'code' => ExceptionTest::ERROR_CODE, 'message' => ExceptionTest::ERROR_MESSAGE],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testNine')
+        );
+
+        $this->assertArraySubset(
+          ['class' => 'Class', 'code' => null, 'message' => ''],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testSingleLine')
+        );
+
+        $this->assertArraySubset(
+          ['class' => 'Class', 'code' => My\Space\ExceptionNamespaceTest::ERROR_CODE, 'message' => My\Space\ExceptionNamespaceTest::ERROR_MESSAGE],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($nsExceptionTest, 'testConstants')
+        );
+
+        // Ensure the Class::CONST expression is only evaluated when the constant really exists
+        $this->assertArraySubset(
+          ['class' => 'Class', 'code' => 'ExceptionTest::UNKNOWN_CODE_CONSTANT', 'message' => 'ExceptionTest::UNKNOWN_MESSAGE_CONSTANT'],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testUnknownConstants')
+        );
+
+        $this->assertArraySubset(
+          ['class' => 'Class', 'code' => 'My\Space\ExceptionNamespaceTest::UNKNOWN_CODE_CONSTANT', 'message' => 'My\Space\ExceptionNamespaceTest::UNKNOWN_MESSAGE_CONSTANT'],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($nsExceptionTest, 'testUnknownConstants')
+        );
+    }
+
+    /**
+     * @covers PHPUnit_Util_Test::getExpectedException
+     */
+    public function testGetExpectedRegExpForTestCase()
+    {
+        $exceptionTest = new \ExceptionTest();
+
+        $this->assertArraySubset(
+          ['message_regex' => '#regex#'],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testWithRegexMessage')
+        );
+
+        $this->assertArraySubset(
+          ['message_regex' => '#regex#'],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testWithRegexMessageFromClassConstant')
+        );
+
+        $this->assertArraySubset(
+          ['message_regex' => 'ExceptionTest::UNKNOWN_MESSAGE_REGEX_CONSTANT'],
+          PHPUnit_Util_Test::getExpectedExceptionForTestCase($exceptionTest, 'testWithUnknowRegexMessageFromClassConstant')
+        );
+    }
+
+    /**
      * @covers       PHPUnit_Util_Test::getRequirements
      * @dataProvider requirementsProvider
      */

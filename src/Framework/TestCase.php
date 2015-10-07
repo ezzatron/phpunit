@@ -482,8 +482,8 @@ abstract class PHPUnit_Framework_TestCase extends PHPUnit_Framework_Assert imple
     protected function setExpectedExceptionFromAnnotation()
     {
         try {
-            $expectedException = PHPUnit_Util_Test::getExpectedException(
-                get_class($this),
+            $expectedException = PHPUnit_Util_Test::getExpectedExceptionForTestCase(
+                $this,
                 $this->name
             );
 
@@ -1104,6 +1104,15 @@ abstract class PHPUnit_Framework_TestCase extends PHPUnit_Framework_Assert imple
         if (is_bool($resolveAnnotations)) {
             $this->resolveAnnotations = $resolveAnnotations;
         }
+    }
+
+    /**
+     * @return bool
+     * @since  Method available since Release ?.?.?
+     */
+    public function resolveAnnotations()
+    {
+        return $this->resolveAnnotations;
     }
 
     /**
