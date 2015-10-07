@@ -342,29 +342,33 @@ class PHPUnit_Util_Test
             $messageRegExp = '';
 
             if ($testCase->resolveAnnotations()) {
+                $symbolResolver = SymbolResolver::instance();
                 $resolutionContext = ResolutionContextReader::instance()
                     ->readFromClass($reflector->getDeclaringClass());
-                $symbolResolver = SymbolResolver::instance();
 
                 $class = $symbolResolver
                     ->resolve($resolutionContext, Symbol::fromString($class))
                     ->runtimeString();
             } else {
-                $resolutionContext = null;
                 $symbolResolver = null;
+                $resolutionContext = null;
             }
 
             if (isset($matches[2])) {
                 $message = trim($matches[2]);
             } elseif (isset($annotations['method']['expectedExceptionMessage'])) {
                 $message = self::parseAnnotationContent(
-                    $annotations['method']['expectedExceptionMessage'][0]
+                    $annotations['method']['expectedExceptionMessage'][0],
+                    $symbolResolver,
+                    $resolutionContext
                 );
             }
 
             if (isset($annotations['method']['expectedExceptionMessageRegExp'])) {
                 $messageRegExp = self::parseAnnotationContent(
-                    $annotations['method']['expectedExceptionMessageRegExp'][0]
+                    $annotations['method']['expectedExceptionMessageRegExp'][0],
+                    $symbolResolver,
+                    $resolutionContext
                 );
             }
 
@@ -372,7 +376,9 @@ class PHPUnit_Util_Test
                 $code = $matches[3];
             } elseif (isset($annotations['method']['expectedExceptionCode'])) {
                 $code = self::parseAnnotationContent(
-                    $annotations['method']['expectedExceptionCode'][0]
+                    $annotations['method']['expectedExceptionCode'][0],
+                    $symbolResolver,
+                    $resolutionContext
                 );
             }
 
@@ -418,15 +424,14 @@ class PHPUnit_Util_Test
         }
 
         if ($symbolResolver) {
-            $parts[0] = $symbolResolver
+            $message = $symbolResolver
                 ->resolve($resolutionContext, Symbol::fromString($parts[0]))
-                ->runtimeString();
+                ->runtimeString() .
+                '::' . $parts[1];
         }
 
-        if (strpos($message, '::') !== false && count(explode('::', $message) == 2)) {
-            if (defined($message)) {
-                $message = constant($message);
-            }
+        if (defined($message)) {
+            $message = constant($message);
         }
 
         return $message;
